@@ -1,4 +1,4 @@
-﻿wparam(
+﻿param(
     [Parameter()][String]$CMDCloseXstore,
     [Parameter()][String]$CMDRestartStack
 )
