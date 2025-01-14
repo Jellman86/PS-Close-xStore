@@ -92,12 +92,19 @@ $loglable.Text = "LogFile: $loggingpath"
 $loglable.font = [System.Drawing.Font]::new("Century Gothic", 10, [System.Drawing.FontStyle]::italic)
 $loglable.ForeColor = 'lightgray'
 
-# Checkbox for reboot of aplication
-$objTypeCheckbox = New-Object System.Windows.Forms.Checkbox 
-$objTypeCheckbox.Location = New-Object System.Drawing.Size(20,145) 
-$objTypeCheckbox.Size = New-Object System.Drawing.Size(200,20)
-$objTypeCheckbox.Text = "Restart on close?"
-$objTypeCheckbox.TabIndex = 3
+# Checkbox for reboot of Application
+$objTypeCheckboxRebootStack = New-Object System.Windows.Forms.Checkbox 
+$objTypeCheckboxRebootStack.Location = New-Object System.Drawing.Size(20,145) 
+$objTypeCheckboxRebootStack.Size = New-Object System.Drawing.Size(200,20)
+$objTypeCheckboxRebootStack.Text = "Restart Stack on close?"
+$objTypeCheckboxRebootStack.TabIndex = 3
+
+# Checkbox for reboot of Machine
+$objTypeCheckboxRebootMachine = New-Object System.Windows.Forms.Checkbox 
+$objTypeCheckboxRebootMachine.Location = New-Object System.Drawing.Size(240,145) 
+$objTypeCheckboxRebootMachine.Size = New-Object System.Drawing.Size(210,20)
+$objTypeCheckboxRebootMachine.Text = "Reboot Machine on close?"
+$objTypeCheckboxRebootMachine.TabIndex = 5
 
 # Information progress label
 $warn = New-Object System.Windows.Forms.Label
@@ -112,7 +119,8 @@ $warn.Text = 'Ready'
 
 # Add all controls to main form.
 $form.Controls.Add($warn)
-$form.Controls.Add($objTypeCheckbox)
+$form.Controls.Add($objTypeCheckboxRebootStack)
+$form.Controls.Add($objTypeCheckboxRebootMachine)
 $form.Controls.Add($label)
 $form.Controls.Add($closeButton)
 $form.Controls.Add($cancelButton)
@@ -222,7 +230,7 @@ function Restart-Stack {
     $time = (get-date -Format "HH:mm:ss")
     $listView.items.Insert(0,"[$time] Attempting Restart of xStore.")
 
-        if($restartStack -ilike "y*" -or $CMDRestartStack -ilike "y*" -or $TRUE -eq $objTypeCheckbox.Checked){
+        if($restartStack -ilike "y*" -or $CMDRestartStack -ilike "y*" -or $TRUE -eq $objTypeCheckboxRebootStack.Checked){
 
             Write-Log " : Attempting to start xStore via the start_eng.vbs file."
             Start-Process "Cscript.exe" -ArgumentList " C:\environment\start_eng.vbs //nologo" -WorkingDirectory 'C:\Windows\System32'
@@ -262,6 +270,36 @@ function Restart-Stack {
         }
 }
 
+# Restarts The System
+function invoke-SystemReboot {
+    param(
+        [String]$rebootMachine
+    )
+
+    $warn.Visible = $true
+
+            $warn.ForeColor = "black"
+            $warn.BackColor = 'yellow'
+            $warn.Text = "Attempting System Reboot"
+
+    #Add record to the list view field for action log.
+    $time = (get-date -Format "HH:mm:ss")
+    $listView.items.Insert(0,"[$time] Attempting Restart of $env:computername.")
+
+        if($rebootmachine -ilike "y*" -or $TRUE -eq $objTypeCheckboxRebootMachine.Checked){
+
+            Write-Log " : Rebooting $env:ComputerName."
+            $listView.items.Insert(0,"[$time] System Reboot now.")
+            Restart-Computer -Force | Out-Null
+
+            $warn.ForeColor = "black"
+            $warn.BackColor = 'yellow'
+            $warn.Text = "Sleeping for 5 Seconds."
+            Start-Sleep -Seconds 5
+
+        }
+}
+
 Function Invoke-UIProcess {
     
     #$warn.Visible = $true
@@ -286,7 +324,15 @@ Function Invoke-UIProcess {
 
             Start-Sleep -Seconds 1;
 
-    if($TRUE -eq $objTypeCheckbox.Checked){
+    if($TRUE -eq $objTypeCheckboxRebootMachine.Checked){
+        
+                $warn.ForeColor = "black"
+                $warn.BackColor = 'yellow'   
+                $global:warn.Text = "Invoking System Reboot"
+                
+                    invoke-SystemReboot -rebootMachine 'y'
+
+    }elseIf($TRUE -eq $objTypeCheckboxRebootStack.Checked){
         
         $warn.ForeColor = "black"
         $warn.BackColor = 'yellow'   
