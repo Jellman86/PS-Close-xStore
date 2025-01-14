@@ -1,11 +1,10 @@
 ﻿param(
     [Parameter()][String]$CMDCloseXstore,
-    [Parameter()][String]$CMDRestartStack
+    [Parameter()][String]$CMDRestartStack,
+    [Parameter()][String]$CMDRestartSystem
 )
 
-#What is the current script version (for logging)
-$scriptVer = "v1.3";
-
+$scriptVer = "v1.4"; #-- Cleanup for GitHub. 
 # -- v1.3 Added log below buttons and cleard up code / UI. 
 # -- v1.2 Fixed Paramiterisation, as execution was calling UAC. 
 # -- v1.1 Paramiterise the program so we can use it in the xenvironment menu.
@@ -355,9 +354,13 @@ If($CMDCloseXstore -ilike "y*"){
     close-xstore -closexStore 'y'
     exit 0
 }
-If($CMDRestartStack -ilike "y*"){
-    close-xstore -closexStore 'y'
-    Restart-Stack -restartStack 'y'
+If($CMDRestartSystem -ilike "y*"){
+    close-xstore -closexStore 'y';
+    invoke-SystemReboot -rebootMachine 'y';
+    exit 0
+}elseif($CMDRestartStack -ilike "y*"){
+    close-xstore -closexStore 'y';
+    Restart-Stack -restartStack 'y';
     exit 0
 }
 
